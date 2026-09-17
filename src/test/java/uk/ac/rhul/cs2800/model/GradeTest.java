@@ -54,6 +54,21 @@ public class GradeTest {
   }
 
   @Test
+  void testSetScoreAboveMaximum() {
+    assertThrows(IllegalArgumentException.class, () -> grade.setScore(101),
+        "Expected IllegalArgumentException when score is above 100");
+  }
+
+  @Test
+  void testSetScoreAtValidBoundaries() {
+    grade.setScore(0);
+    assertEquals(0, grade.getScore(), "Expected zero to be accepted");
+
+    grade.setScore(100);
+    assertEquals(100, grade.getScore(), "Expected 100 to be accepted");
+  }
+
+  @Test
   void testSetModule() {
     Module newModule = new Module("CS102", "Data Structures", false);
     grade.setModule(newModule);
