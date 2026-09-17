@@ -1,7 +1,9 @@
 package uk.ac.rhul.cs2800.controller;
 
 import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,16 +52,22 @@ public class GradeController {
    */
   @PostMapping(value = "/grades/addGrade")
   public ResponseEntity<Grade> addGrade(@RequestBody Map<String, String> params) {
-    // Use correct parameter keys and ensure non-null values
-    Long studentId = Long.valueOf(params.get("student_id"));
-    String moduleCode = params.get("module_code");
-    Integer score = Integer.valueOf(params.get("score"));
+    Long studentId = parseLongParameter(params, "student_id");
+    String moduleCode = requireParameter(params, "module_code");
+    Integer score = parseIntegerParameter(params, "score");
+
+    if (score < 0 || score > 100) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Score must be between 0 and 100");
+    }
 
     Student student = studentRepository.findById(studentId)
-        .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Student not found with ID: " + studentId));
 
     Module module = moduleRepository.findById(moduleCode)
-        .orElseThrow(() -> new RuntimeException("Module not found with code: " + moduleCode));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Module not found with code: " + moduleCode));
 
     Grade grade = new Grade();
     grade.setScore(score);
@@ -68,6 +76,33 @@ public class GradeController {
 
     Grade savedGrade = gradeRepository.save(grade);
     return ResponseEntity.ok(savedGrade);
+  }
+
+  private String requireParameter(Map<String, String> params, String name) {
+    String value = params.get(name);
+    if (value == null || value.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Missing required parameter: " + name);
+    }
+    return value;
+  }
+
+  private Long parseLongParameter(Map<String, String> params, String name) {
+    try {
+      return Long.valueOf(requireParameter(params, name));
+    } catch (NumberFormatException exception) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Parameter must be a whole number: " + name, exception);
+    }
+  }
+
+  private Integer parseIntegerParameter(Map<String, String> params, String name) {
+    try {
+      return Integer.valueOf(requireParameter(params, name));
+    } catch (NumberFormatException exception) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Parameter must be a whole number: " + name, exception);
+    }
   }
 
 }
