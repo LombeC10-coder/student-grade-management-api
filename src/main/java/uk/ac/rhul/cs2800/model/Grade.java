@@ -58,11 +58,11 @@ public class Grade {
    * Sets the score of the grade.
    *
    * @param score the score to set
-   * @throws IllegalArgumentException if the score is null or negative
+   * @throws IllegalArgumentException if the score is null or outside the range 0 to 100
    */
   public void setScore(Integer score) {
-    if (score == null || score < 0) {
-      throw new IllegalArgumentException("Score must be a non-negative integer");
+    if (score == null || score < 0 || score > 100) {
+      throw new IllegalArgumentException("Score must be between 0 and 100");
     }
     this.score = score;
   }
